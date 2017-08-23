@@ -127,6 +127,88 @@ class ProjectionIntegrator
         return updated;
     }
 
+    template <class DataType, class ColorType>
+    bool IntegrateColor(const std::shared_ptr<const DepthImage<DataType>> &depthImage, const PinholeCamera &camera, const Transform &cameraPose,
+                        const std::shared_ptr<const ColorImage<ColorType>> &colorImage, Chunk *chunk) const
+    {
+        assert(chunk != nullptr);
+
+        float resolution = chunk->GetVoxelResolutionMeters();
+        Vec3 origin = chunk->GetOrigin();
+        float resolutionDiagonal = 2.0 * sqrt(3.0f) * resolution;
+        bool updated = false;
+        //std::vector<size_t> indexes;
+        //indexes.resize(centroids.size());
+        //for (size_t i = 0; i < centroids.size(); i++)
+        //{
+        //    indexes[i] = i;
+        //}
+
+        for (size_t i = 0; i < centroids.size(); i++)  // centroids.size() \approx 512
+        //parallel_for(indexes.begin(), indexes.end(), [&](const size_t& i)
+        {
+            Color<ColorType> color;
+            Vec3 voxelCenter = centroids[i] + origin;
+            Vec3 voxelCenterInCamera = cameraPose.linear().transpose() * (voxelCenter - cameraPose.translation());
+            Vec3 cameraPos = camera.ProjectPoint(voxelCenterInCamera);  // voxel here is (x,y,z)
+            // cameraPos is (u,v, Euclid distance)
+
+            //if (!camera.IsPointOnImage(cameraPos) || voxelCenterInCamera.z() < 0)
+            if (!camera.IsPointOnImage(cameraPos))  // it is OK for FisheyeCamera if the z is < 0
+            {
+                continue;
+            }
+
+            //float voxelDist = voxelCenterInCamera.z();
+            float voxelDist = cameraPos(2);  // FisheyeCamera: use Euclid distance as voxelDist
+            float depth = depthImage->DepthAt((int)cameraPos(1), (int)cameraPos(0)); //depthImage->BilinearInterpolateDepth(cameraPos(0), cameraPos(1));
+            //float depth = depthImage->BilinearInterpolateDepth(cameraPos(0), cameraPos(1));
+
+            // FisheyeCamera: depth is Euclid distance
+
+            if (std::isnan(depth))
+            {
+                continue;
+            }
+
+            float truncation = truncator->GetTruncationDistance(depth);
+            float sphereDist = depth - voxelDist;  // actually in FisheyeCamera, it is sphereDist
+
+            if ( depth > 30.0f)//100.0f) //1500.0f  first: is DEP_INF_1, but not DEP_INF. (TODO: use a fix flag or ...)
+                continue;
+
+            if (depth <=100.0f && std::abs(sphereDist) < truncation + resolutionDiagonal)
+            {
+                ColorVoxel &colorVoxel = chunk->GetColorVoxelMutable(i);
+
+                if (colorVoxel.GetWeight() < 5)
+                {
+                    int r = static_cast<int>(cameraPos(1));
+                    int c = static_cast<int>(cameraPos(0));
+                    colorImage->At(r, c, &color);
+                    colorVoxel.Integrate(color.red, color.green, color.blue, 1);
+                }
+
+                DistVoxel &voxel = chunk->GetDistVoxelMutable(i);
+                voxel.Integrate(sphereDist, weighter->GetWeight(sphereDist, truncation));
+
+                updated = true;
+            }
+            else if (enableVoxelCarving && sphereDist > truncation + carvingDist)
+            {
+                DistVoxel &voxel = chunk->GetDistVoxelMutable(i);
+                //if (voxel.GetWeight() > 0 && voxel.GetSDF() < 1e-5)
+                if (voxel.GetWeight() > 0 && voxel.GetSDF() > 1e-5)
+                {
+                    voxel.Carve();
+                    updated = true;
+                }
+            }
+        }
+
+        return updated;
+    }    
+
     inline const TruncatorPtr &GetTruncator()
     {
         return truncator;

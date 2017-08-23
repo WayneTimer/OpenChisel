@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(chisel_ros)
 
 # add_definitions( -DPRINT_TIMING )
+# add_definitions( -DFISHEYE )  # Fisheye
 
 find_package(catkin REQUIRED COMPONENTS
           roscpp

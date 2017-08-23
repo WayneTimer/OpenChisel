@@ -1,0 +1,31 @@
+<launch>
+    <machine name="local" address="localhost" default="true"/>
+
+    <!-- node name="Chisel" pkg="chisel_ros" type="ChiselNode" output="screen" launch-prefix="taskset -c 0,1" -->
+    <node name="Chisel" pkg="chisel_ros" type="ChiselNode" output="screen" >
+        <param name="chunk_size_x" value="8"/>  <!-- 8 -->
+        <param name="chunk_size_y" value="8"/>
+        <param name="chunk_size_z" value="8"/>
+        <param name="truncation_scale" value="1.5"/>  <!-- 2 -->
+        <param name="integration_weight" value="1.0"/>
+        <param name="use_voxel_carving" value="true"/>
+        <param name="carving_dist_m" value="0.01"/>
+        <param name="voxel_resolution_m" value="0.05"/>  <!-- 0.1 for demo, 0.2 for bbgf -->
+
+        <param name="near_plane_dist" value="0.04"/>
+        <param name="far_plane_dist" value="6.0"/>
+        <param name="base_transform" value="/world"/>
+        <param name="transform_name" value="/camera"/>
+
+        <param name="three_camera_mode" value="false"/>
+        <param name="calc_mesh" value="true"/>
+        <param name="number_of_threads" value="16" />
+
+        <param name="camera_model_file" value="$(find chisel_ros)/config/pinhole_visensor.yaml" />
+        <param name="mask_file" value="$(find chisel_ros)/config/nomask.jpg" />
+
+        <remap from="/odom_topic" to="/mapper_node/odometry"/>
+        <remap from="/depth_image" to="/mapper_node/depth/image_raw"/>
+        <remap from="/color_image" to="/left/image_rect"/>  <!-- ? TODO: check if using img after rect, to use correct camera_info -->
+    </node>
+</launch>

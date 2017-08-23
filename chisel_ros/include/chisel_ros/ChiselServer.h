@@ -221,7 +221,11 @@ class ChiselServer
     ros::ServiceServer getAllChunksServer;
 
     std::vector<RosCameraTopic> depthCamera, colorCamera;
+#ifdef FISHEYE
     chisel::FisheyeCamera cam;
+#else
+    chisel::PinholeCamera cam;
+#endif
 
     std::vector<std::shared_ptr<chisel::DepthImage<DepthData>>> lastDepthImage;
     std::vector<std::shared_ptr<chisel::ColorImage<ColorData>>> lastColorImage;

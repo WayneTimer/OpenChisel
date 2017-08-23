@@ -19,6 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <opencv2/opencv.hpp>
 #include <open_chisel/camera/PinholeCamera.h>
 
 namespace chisel
@@ -33,6 +34,42 @@ namespace chisel
     PinholeCamera::~PinholeCamera()
     {
 
+    }
+
+    void PinholeCamera::setFarPlane(float _farPlane)
+    {
+        farPlane = _farPlane;
+    }    
+
+    void PinholeCamera::loadMask(std::string mask_file)
+    {
+        mask = cv::imread(mask_file.c_str(), 0);
+    }
+
+    void PinholeCamera::loadCameraFile(std::string camera_model_file)
+    {
+        float fx,fy,cx,cy;
+
+        farPlane = 0;        
+
+        FILE *file = fopen(camera_model_file.c_str(),"r");
+        fscanf(file,"%*s %d",&width);
+        fscanf(file,"%*s %d",&height);
+        fscanf(file,"%*s %f",&fx);
+        fscanf(file,"%*s %f",&fy);
+        fscanf(file,"%*s %f",&cx);
+        fscanf(file,"%*s %f",&cy);
+
+
+        Eigen::Matrix3f K = Eigen::Matrix3f::Zero();
+        K(0,0) = fx;
+        K(1,1) = fy;
+        K(0,2) = cx;
+        K(1,2) = cy;
+        K(2,2) = 1.0f;
+        intrinsics.SetMatrix(K);
+
+        printf("FisheyeCamera init: width = %d, height = %d\n", width, height);
     }
 
     Vec3 PinholeCamera::ProjectPoint(const Vec3& point) const

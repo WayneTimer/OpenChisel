@@ -40,6 +40,9 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "utility": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "core": "cpp",
+        "strstream": "cpp",
+        "slist": "cpp"
     }
 }

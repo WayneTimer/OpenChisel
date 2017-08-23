@@ -26,6 +26,8 @@
 #include <open_chisel/geometry/Geometry.h>
 #include <open_chisel/geometry/Frustum.h>
 #include <open_chisel/camera/Intrinsics.h>
+#include "camodocal/camera_models/CameraFactory.h"
+#include "camodocal/camera_models/PinholeCamera.h"
 
 namespace chisel
 {
@@ -50,20 +52,24 @@ namespace chisel
             inline float GetFarPlane() const { return farPlane; }
             inline void SetNearPlane(float value) { nearPlane = value; }
             inline void SetFarPlane(float value) { farPlane = value; }
+            void loadMask(std::string mask_file);
 
             void SetupFrustum(const Transform& view, Frustum* frustum) const;
 
+            void setFarPlane(float _farPlane);
+            void loadCameraFile(std::string camera_model_file);
             Vec3 ProjectPoint(const Vec3& point) const;
             Vec3 UnprojectPoint(const Vec3& point) const;
 
             bool IsPointOnImage(const Vec3& point) const;
 
-        protected:
+        //protected:
             Intrinsics intrinsics;
             int width;
             int height;
             float nearPlane;
             float farPlane;
+            cv::Mat mask;
 
     };
     typedef std::shared_ptr<PinholeCamera> PinholeCameraPtr;
