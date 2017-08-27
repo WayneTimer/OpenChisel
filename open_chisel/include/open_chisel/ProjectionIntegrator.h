@@ -151,20 +151,15 @@ class ProjectionIntegrator
             Vec3 voxelCenter = centroids[i] + origin;
             Vec3 voxelCenterInCamera = cameraPose.linear().transpose() * (voxelCenter - cameraPose.translation());
             Vec3 cameraPos = camera.ProjectPoint(voxelCenterInCamera);  // voxel here is (x,y,z)
-            // cameraPos is (u,v, Euclid distance)
 
-            //if (!camera.IsPointOnImage(cameraPos) || voxelCenterInCamera.z() < 0)
-            if (!camera.IsPointOnImage(cameraPos))  // it is OK for FisheyeCamera if the z is < 0
+            if (!camera.IsPointOnImage(cameraPos) || voxelCenterInCamera.z() < 0)
             {
                 continue;
             }
 
-            //float voxelDist = voxelCenterInCamera.z();
-            float voxelDist = cameraPos(2);  // FisheyeCamera: use Euclid distance as voxelDist
+            float voxelDist = voxelCenterInCamera.z();
             float depth = depthImage->DepthAt((int)cameraPos(1), (int)cameraPos(0)); //depthImage->BilinearInterpolateDepth(cameraPos(0), cameraPos(1));
             //float depth = depthImage->BilinearInterpolateDepth(cameraPos(0), cameraPos(1));
-
-            // FisheyeCamera: depth is Euclid distance
 
             if (std::isnan(depth))
             {
@@ -172,12 +167,12 @@ class ProjectionIntegrator
             }
 
             float truncation = truncator->GetTruncationDistance(depth);
-            float sphereDist = depth - voxelDist;  // actually in FisheyeCamera, it is sphereDist
+            float surfaceDist = depth - voxelDist;
 
             if ( depth > 30.0f)//100.0f) //1500.0f  first: is DEP_INF_1, but not DEP_INF. (TODO: use a fix flag or ...)
                 continue;
 
-            if (depth <=100.0f && std::abs(sphereDist) < truncation + resolutionDiagonal)
+            if (depth <=100.0f && std::abs(surfaceDist) < truncation + resolutionDiagonal)
             {
                 ColorVoxel &colorVoxel = chunk->GetColorVoxelMutable(i);
 
@@ -190,15 +185,15 @@ class ProjectionIntegrator
                 }
 
                 DistVoxel &voxel = chunk->GetDistVoxelMutable(i);
-                voxel.Integrate(sphereDist, weighter->GetWeight(sphereDist, truncation));
+                voxel.Integrate(surfaceDist, weighter->GetWeight(surfaceDist, truncation));
 
                 updated = true;
             }
-            else if (enableVoxelCarving && sphereDist > truncation + carvingDist)
+            else if (enableVoxelCarving && surfaceDist > truncation + carvingDist)
             {
                 DistVoxel &voxel = chunk->GetDistVoxelMutable(i);
-                //if (voxel.GetWeight() > 0 && voxel.GetSDF() < 1e-5)
-                if (voxel.GetWeight() > 0 && voxel.GetSDF() > 1e-5)
+                if (voxel.GetWeight() > 0 && voxel.GetSDF() < 1e-5)
+                //if (voxel.GetWeight() > 0 && voxel.GetSDF() > 1e-5)
                 {
                     voxel.Carve();
                     updated = true;
