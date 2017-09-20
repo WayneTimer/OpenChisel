@@ -88,6 +88,8 @@ namespace chisel
         uchar val = mask.at<uchar>(point(1), point(0));  // u,v
         if (val!=255)  // 255 - white - inside, 0 - black - outside
             return false;
+        if (point(2)<0.0)
+            return false;
         return true;
     }    
 } // namespace chisel

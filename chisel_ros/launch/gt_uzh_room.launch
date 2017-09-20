@@ -21,7 +21,7 @@
         <param name="number_of_threads" value="64" />
 
         <param name="camera_model_file" type="string" value="/home/timer/bags/uzh_datasets/room/info/intrinsics.txt"/>
-        <param name="mask_file" value="$(find chisel_ros)/config/fisheye_mask_640x480_r_300.jpg" />
+        <param name="mask_file" value="$(find chisel_ros)/config/fisheye_mask_640x480_r_250.jpg" />
 
         <remap from="/odom_topic" to="/motion_stereo_left/odometry"/>
         <remap from="/depth_image" to="/UZH_dataset_warpper/gt_depth_float"/> <!-- depth is Euclid depth -->

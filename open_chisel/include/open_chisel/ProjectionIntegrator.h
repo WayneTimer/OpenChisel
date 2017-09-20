@@ -76,6 +76,10 @@ class ProjectionIntegrator
             {
                 continue;
             }
+            if (voxelCenterInCamera(2)<=0.0)
+            {
+                continue;
+            }
 
             //float voxelDist = voxelCenterInCamera.z();
             float voxelDist = cameraPos(2);  // FisheyeCamera: use Euclid distance as voxelDist
